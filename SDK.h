@@ -120,10 +120,13 @@ namespace UE4
 						if (!Prop)
 							continue;
 
+						outputFile << "===========================================" << endl;
+						outputFile << format("Name: {}", Prop->GetFullName()).c_str() << endl;
 						outputFile << format("Offset: 0x{:x}", Prop->Offset).c_str() << endl;
 						outputFile << format("ArrayDim: 0x{:x}", Prop->ArrayDim).c_str() << endl;
 						outputFile << format("ElementSize: 0x{:x}", Prop->ElementSize).c_str() << endl;
 						outputFile << format("PropertyFlags: {}", Prop->PropertyFlags).c_str() << endl;
+						outputFile << "===========================================\n" << endl;
 					}
 					outputFile << "---------------------------------------------" << endl;
 				}
@@ -180,10 +183,13 @@ namespace UE4
 							if (!Prop)
 								continue;
 
+							outputFile << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << endl;
+							outputFile << format("Name: {}", Prop->GetFullName()).c_str() << endl;
 							outputFile << format("Offset: 0x{:x}", Prop->Offset).c_str() << endl;
 							outputFile << format("ArrayDim: 0x{:x}", Prop->ArrayDim).c_str() << endl;
 							outputFile << format("ElementSize: 0x{:x}", Prop->ElementSize).c_str() << endl;
 							outputFile << format("PropertyFlags: {}", Prop->PropertyFlags).c_str() << endl;
+							outputFile << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n" << endl;
 						}
 						outputFile << "---------------------------------------------" << endl;
 					}

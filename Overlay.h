@@ -123,14 +123,14 @@ namespace Overlay
 
 		if (bOpenMenu)
 		{
-			// Capture the mouse when the menu is open
+		/*	// Capture the mouse when the menu is open
 			io.WantCaptureMouse = true;
 
 			// Set the mouse cursor to visible
 			if (!io.MouseDrawCursor)
 			{
 				io.MouseDrawCursor = true;
-			}
+			}*/
 
 			ImGui::Begin("NX-Finder");
 			ImGui::SetWindowSize("NX-Finder", { 900, 750 }, ImGuiWindowFlags_NoResize);
@@ -203,23 +203,35 @@ namespace Overlay
 										}
 										else if (ActorProp->GetFullName().starts_with("IntProperty "))
 										{
-											auto PropertyYuh = *(uint8*)(__int64(Actor) + ActorProp->Offset);
-											ImGui::Text(format("IntProperty: {}: {}", ActorProp->GetName(), PropertyYuh).c_str());
+											auto PropertyYuh = *(int*)(__int64(Actor) + ActorProp->Offset);
+											ImGui::Text(format("IntProperty: {}:", ActorProp->GetName()).c_str());
+											ImGui::SameLine();
+											ImGui::InputInt("", &PropertyYuh);
 										}
 										else if (ActorProp->GetFullName().starts_with("BoolProperty "))
 										{
 											auto PropertyYuh = *(bool*)(__int64(Actor) + ActorProp->Offset);
-											ImGui::Text(format("BoolProperty: {}: {}", ActorProp->GetName(), PropertyYuh).c_str());
+											ImGui::Text(format("BoolProperty: {}: ", ActorProp->GetName()).c_str());
+											ImGui::SameLine();
+											ImGui::Checkbox("", &PropertyYuh);
 										}
 										else if (ActorProp->GetFullName().starts_with("NameProperty "))
 										{
 											auto PropertyYuh = *(FName*)(__int64(Actor) + ActorProp->Offset);
 											ImGui::Text(format("NameProperty: {}: {}", ActorProp->GetName(), PropertyYuh.ToString()).c_str());
+											/*ImGui::SameLine();
+											static const char* namebuf = PropertyYuh.ToString().c_str();
+											if (ImGui::InputText("", (char*)namebuf, sizeof(namebuf)))
+											{
+												//TODO
+											}*/
 										}
 										else if (ActorProp->GetFullName().starts_with("FloatProperty "))
 										{
 											auto PropertyYuh = *(float*)(__int64(Actor) + ActorProp->Offset);
 											ImGui::Text(format("FloatProperty: {}: {}", ActorProp->GetName(), PropertyYuh).c_str());
+											ImGui::SameLine();
+											ImGui::SliderFloat("", &PropertyYuh, 0, 360);
 										}
 									}
 								}
@@ -227,6 +239,7 @@ namespace Overlay
 							}
 						}
 					}
+					ImGui::EndTabItem();
 				}
 				ImGui::EndTabItem();
 				ImGui::EndTabBar();
@@ -430,12 +443,12 @@ namespace Overlay
 			ImGui::EndTabBar();
 			ImGui::End();
 		}
-		else
+		/*else
 		{
 			// Release mouse capture when the menu is closed
 			io.WantCaptureMouse = false;
 			io.MouseDrawCursor = false;  // Hide the mouse cursor when the menu is closed
-		}
+		}*/
 	}
 
 	bool init = false;
@@ -473,8 +486,329 @@ namespace Overlay
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 
-		Watermark();
-		Menu();
+		//Watermark();
+		if (bOpenMenu)
+		{
+			/*	// Capture the mouse when the menu is open
+				io.WantCaptureMouse = true;
+
+				// Set the mouse cursor to visible
+				if (!io.MouseDrawCursor)
+				{
+					io.MouseDrawCursor = true;
+				}*/
+
+			ImGui::Begin("NX-Finder");
+			ImGui::BeginTabBar("TabBar");
+			if (ImGui::BeginTabItem("Game"))
+			{
+				ImGui::BeginTabBar("GameTabBar");
+				if (ImGui::BeginTabItem("Live Actors"))
+				{
+					static vector<UObject*> LiveActors{};
+					static bool bActorsLoaded = !LiveActors.empty();
+					if (!bActorsLoaded && ImGui::Button("Load Actors"))
+					{
+						UObject* World = Globals::GetWorld();
+						LogInfo("World: {}", World->GetFullName());
+						auto Actors = Globals::GetAllActors();
+						if (Actors.IsValid())
+						{
+							for (int i = 0; i < Actors.Num(); i++)
+							{
+								UObject* Actor = Actors[i];
+								if (!Actor)
+									continue;
+
+								LiveActors.push_back(Actor);
+							}
+						}
+
+						bActorsLoaded = !LiveActors.empty();
+					}
+					if (bActorsLoaded && ImGui::Button("Refresh Actors"))
+					{
+						LiveActors.clear();
+						UObject* World = Globals::GetWorld();
+						LogInfo("World: {}", World->GetFullName());
+						auto Actors = Globals::GetAllActors();
+						if (Actors.IsValid())
+						{
+							for (int i = 0; i < Actors.Num(); i++)
+							{
+								UObject* Actor = Actors[i];
+								if (!Actor)
+									continue;
+
+								LiveActors.push_back(Actor);
+							}
+						}
+
+						bActorsLoaded = !LiveActors.empty();
+					}
+					if (bActorsLoaded)
+					{
+						for (UObject* Actor : LiveActors)
+						{
+							if (ImGui::TreeNode(format("{}", Actor->GetFullName()).c_str()))
+							{
+								ImGui::Text(format("Class: {}", Actor->Class->GetFullName()).c_str());
+								ImGui::Separator();
+								vector<UProperty*> ActorProperties = Actor->GetProperties();
+								if (!ActorProperties.empty())
+								{
+									for (UProperty* ActorProp : ActorProperties)
+									{
+										if (!ActorProp)
+											continue;
+
+										if (ActorProp->GetFullName().starts_with("ObjectProperty "))
+										{
+											auto PropertyYuh = *(UObject**)(__int64(Actor) + ActorProp->Offset);
+											ImGui::Text(format("ObjectProperty: {}: {}", ActorProp->GetName(), PropertyYuh->GetFullName()).c_str());
+										}
+										else if (ActorProp->GetFullName().starts_with("IntProperty "))
+										{
+											auto PropertyYuh = *(int*)(__int64(Actor) + ActorProp->Offset);
+											ImGui::Text(format("IntProperty: {}:", ActorProp->GetName()).c_str());
+											ImGui::SameLine();
+											ImGui::InputInt("", &PropertyYuh);
+										}
+										else if (ActorProp->GetFullName().starts_with("BoolProperty "))
+										{
+											auto PropertyYuh = *(bool*)(__int64(Actor) + ActorProp->Offset);
+											ImGui::Text(format("BoolProperty: {}: ", ActorProp->GetName()).c_str());
+											ImGui::SameLine();
+											ImGui::Checkbox("", &PropertyYuh);
+										}
+										else if (ActorProp->GetFullName().starts_with("NameProperty "))
+										{
+											auto PropertyYuh = *(FName*)(__int64(Actor) + ActorProp->Offset);
+											ImGui::Text(format("NameProperty: {}: {}", ActorProp->GetName(), PropertyYuh.ToString()).c_str());
+											/*ImGui::SameLine();
+											static const char* namebuf = PropertyYuh.ToString().c_str();
+											if (ImGui::InputText("", (char*)namebuf, sizeof(namebuf)))
+											{
+												//TODO
+											}*/
+										}
+										else if (ActorProp->GetFullName().starts_with("FloatProperty "))
+										{
+											auto PropertyYuh = *(float*)(__int64(Actor) + ActorProp->Offset);
+											ImGui::Text(format("FloatProperty: {}: {}", ActorProp->GetName(), PropertyYuh).c_str());
+											ImGui::SameLine();
+											ImGui::SliderFloat("", &PropertyYuh, 0, 360);
+										}
+									}
+								}
+								ImGui::TreePop();
+							}
+						}
+					}
+					ImGui::EndTabItem();
+				}
+				ImGui::EndTabItem();
+				ImGui::EndTabBar();
+			}
+			if (ImGui::BeginTabItem("Class Inspector"))
+			{
+				static bool bFailed = false;
+				static char buffer[128] = "";
+				static string ClassName = "";
+				static vector<UProperty*> ClassProps{};
+				static vector<UFunction*> ClassFuncs{};
+				ImGui::InputText("Class Name", buffer, sizeof(buffer));
+				if (bFailed) ImGui::Text(format("{} is an invalid class.", ClassName).c_str());
+				if (ImGui::Button("Inspect"))
+				{
+					ClassName = buffer;
+					auto Class = UE4::Utils::GetDefaultObj(buffer);
+
+					if (Class)
+					{
+						ClassName = Class->GetName();
+						ClassProps.clear();
+						ClassFuncs.clear();
+						for (UProperty* Property : Class->GetProperties())
+						{
+							if (Property)
+								ClassProps.push_back(Property);
+						}
+
+						for (UFunction* Function : Class->GetFunctions())
+						{
+							if (Function)
+								ClassFuncs.push_back(Function);
+						}
+
+						bFailed = false;
+					}
+					else
+						bFailed = true;
+				}
+
+				ImGui::Text(format("{}", ClassName).c_str());
+				ImGui::Separator();
+				if (!ClassProps.empty() && ImGui::TreeNode("Properties"))
+				{
+					for (UProperty* Prop : ClassProps)
+					{
+						ImGui::Separator();
+						if (ImGui::TreeNode(format("{}", Prop->GetFullName()).c_str()))
+						{
+							ImGui::Text(format("Offset: 0x{:x}", Prop->Offset).c_str());
+							ImGui::Text(format("ArrayDim: 0x{:x}", Prop->ArrayDim).c_str());
+							ImGui::Text(format("ElementSize: 0x{:x}", Prop->ElementSize).c_str());
+							ImGui::Text(format("PropertyFlags: {}", Prop->PropertyFlags).c_str());
+							ImGui::TreePop();
+						}
+					}
+					ImGui::TreePop();
+				}
+				if (!ClassFuncs.empty() && ImGui::TreeNode("Functions"))
+				{
+					for (UFunction* Func : ClassFuncs)
+					{
+						if (!Func)
+							continue;
+						ImGui::Separator();
+						if (ImGui::TreeNode(format("{}", Func->GetFullName()).c_str()))
+						{
+							ImGui::Text(format("Exec: 0x{:x}", Memory::GetOffset(Func->ExecFunction)).c_str());
+							vector<UProperty*> FuncProps = Func->GetFuncProperties();
+							for (UProperty* Prop : FuncProps)
+							{
+								if (!Prop)
+									continue;
+
+								if (ImGui::TreeNode(format("{}", Prop->GetFullName()).c_str()))
+								{
+									ImGui::Text(format("Offset: 0x{:x}", Prop->Offset).c_str());
+									ImGui::Text(format("ArrayDim: 0x{:x}", Prop->ArrayDim).c_str());
+									ImGui::Text(format("ElementSize: 0x{:x}", Prop->ElementSize).c_str());
+									ImGui::Text(format("PropertyFlags: {}", Prop->PropertyFlags).c_str());
+									ImGui::TreePop();
+								}
+							}
+							ImGui::TreePop();
+						}
+					}
+					ImGui::TreePop();
+				}
+				if (!ClassProps.empty() && ImGui::Button("Dump"))
+				{
+					UE4::Utils::DumpClass(Globals::GamePath, ClassName, ClassProps, ClassFuncs);
+				}
+
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Offsets"))
+			{
+				ImGui::Text(format("GObjects: 0x{:x}", Offsets::GObjects).c_str());
+				ImGui::Text(format("Append String: 0x{:x}", Offsets::AppendString).c_str());
+				ImGui::Text(format("GWorld: 0x{:x}", Offsets::GWorld).c_str());
+				ImGui::Text(format("Process Event: 0x{:x}", Offsets::ProcessEvent).c_str());
+				ImGui::Text(format("Process Event Idx: 0x{:x}", Offsets::ProcessEventIdx).c_str());
+				ImGui::Separator();
+				ImGui::Text(format("SetWorld: 0x{:x}", Offsets::SetWorld).c_str());
+				ImGui::Text(format("InitListen: 0x{:x}", Offsets::InitListen).c_str());
+				ImGui::Separator();
+				if (ImGui::Button("Dump"))
+				{
+					MessageBoxA(0, "Not available yet.", "NX-Finder", 0);
+				}
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Dump"))
+			{
+				ImGui::Text(format("Dump Location: {}", Globals::GamePath).c_str());
+				ImGui::Separator();
+				if (ImGui::Button("Dump Objects"))
+				{
+					UE4::Utils::DumpObjects(Globals::GamePath);
+				}
+
+				if (ImGui::Button("Dump Classes"))
+				{
+					UE4::Utils::DumpClasses(Globals::GamePath);
+				}
+
+				if (ImGui::Button("Dump Functions"))
+				{
+					UE4::Utils::DumpFunctions(Globals::GamePath);
+				}
+
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Memory Search (WIP)"))
+			{
+				ImGui::Text("Use this if you know what you're doing. (THIS IS VERY WIP)");
+				ImGui::Separator();
+
+				static vector<uint8_t> opcodeList{};
+				static char membuffer[128] = "";
+				static char optbuffer[16] = "";
+				static bool bFirstFind = false;
+				static bool bForward = false;
+				static uintptr_t StringOffset = 0;
+				static uintptr_t FuncOffset = 0;
+				ImGui::InputText("String to search", membuffer, sizeof(membuffer));
+				ImGui::SameLine();
+				ImGui::Checkbox("First Find", &bFirstFind);
+				ImGui::Checkbox("Forward", &bForward);
+				ImGui::InputText("Opcode (Hex)", optbuffer, sizeof(optbuffer));
+				ImGui::SameLine();
+				if (ImGui::Button("Add"))
+				{
+					int opcode;
+					std::stringstream ss;
+					ss << std::hex << optbuffer;
+					if (ss >> opcode)  // Convert hex string to int
+					{
+						opcodeList.push_back(opcode);
+					}
+					optbuffer[0] = '\0';  // Clear input after adding
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Clear"))
+				{
+					opcodeList.clear();
+				}
+				ImGui::Separator();
+				ImGui::Text("Opcodes:");
+				for (uint8_t opcode : opcodeList)
+				{
+					ImGui::SameLine();
+					ImGui::Text(format("0x{:x}, ", opcode).c_str());
+				}
+				ImGui::Separator();
+				if (ImGui::Button("Find"))
+				{
+					string str = string(membuffer);
+					std::wstring widestr = std::wstring(str.begin(), str.end());
+					const wchar_t* widecstr = widestr.c_str();
+
+					auto StringRefAddr = Memcury::Scanner::FindStringRef(widecstr, bFirstFind);
+					if (StringRefAddr.IsValid())
+					{
+						StringOffset = Memory::GetOffset(StringRefAddr.GetAs<void*>());
+						FuncOffset = Memory::GetOffset(StringRefAddr.ScanFor(opcodeList, bForward).GetAs<void*>());
+					}
+				}
+				ImGui::Separator();
+				ImGui::Text("Results:");
+				ImGui::Text(format("String at: 0x{:x}", StringOffset).c_str());
+				ImGui::Text(format("In Function: 0x{:x}", FuncOffset).c_str());
+
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Settings"))
+			{
+				ImGui::EndTabItem();
+			}
+			ImGui::EndTabBar();
+			ImGui::End();
+		}
 
 		ImGui::Render();
 
