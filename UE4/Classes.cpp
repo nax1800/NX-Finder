@@ -118,7 +118,7 @@ namespace UE4
 	std::vector<UProperty*> UObject::GetFuncProperties() const
 	{
 		std::vector<UProperty*> Properties;
-		for (UField* Field = Class->Children; Field; Field = Field->Next)
+		for (UField* Field = ((UFunction*)this)->Children; Field; Field = Field->Next)
 		{
 			if (Field->IsA(EClassCastFlags::Property))
 				Properties.push_back((UProperty*)Field);

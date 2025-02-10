@@ -133,8 +133,104 @@ namespace Overlay
 			}
 
 			ImGui::Begin("NX-Finder");
-			ImGui::SetWindowSize("NX-Finder", { 750, 525 });
+			ImGui::SetWindowSize("NX-Finder", { 900, 750 }, ImGuiWindowFlags_NoResize);
 			ImGui::BeginTabBar("TabBar");
+			if (ImGui::BeginTabItem("Game"))
+			{
+				ImGui::BeginTabBar("GameTabBar");
+				if (ImGui::BeginTabItem("Live Actors"))
+				{
+					static vector<UObject*> LiveActors{};
+					static bool bActorsLoaded = !LiveActors.empty();
+					if (!bActorsLoaded && ImGui::Button("Load Actors"))
+					{
+						UObject* World = Globals::GetWorld();
+						LogInfo("World: {}", World->GetFullName());
+						auto Actors = Globals::GetAllActors();
+						if (Actors.IsValid())
+						{
+							for (int i = 0; i < Actors.Num(); i++)
+							{
+								UObject* Actor = Actors[i];
+								if (!Actor)
+									continue;
+
+								LiveActors.push_back(Actor);
+							}
+						}
+
+						bActorsLoaded = !LiveActors.empty();
+					}
+					if (bActorsLoaded && ImGui::Button("Refresh Actors"))
+					{
+						UObject* World = Globals::GetWorld();
+						LogInfo("World: {}", World->GetFullName());
+						auto Actors = Globals::GetAllActors();
+						if (Actors.IsValid())
+						{
+							for (int i = 0; i < Actors.Num(); i++)
+							{
+								UObject* Actor = Actors[i];
+								if (!Actor)
+									continue;
+
+								LiveActors.push_back(Actor);
+							}
+						}
+
+						bActorsLoaded = !LiveActors.empty();
+					}
+					if (bActorsLoaded)
+					{
+						for (UObject* Actor : LiveActors)
+						{
+							if (ImGui::TreeNode(format("{}", Actor->GetFullName()).c_str()))
+							{
+								ImGui::Text(format("Class: {}", Actor->Class->GetFullName()).c_str());
+								ImGui::Separator();
+								vector<UProperty*> ActorProperties = Actor->GetProperties();
+								if (!ActorProperties.empty())
+								{
+									for (UProperty* ActorProp : ActorProperties)
+									{
+										if (!ActorProp)
+											continue;
+
+										if (ActorProp->GetFullName().starts_with("ObjectProperty "))
+										{
+											auto PropertyYuh = *(UObject**)(__int64(Actor) + ActorProp->Offset);
+											ImGui::Text(format("ObjectProperty: {}: {}", ActorProp->GetName(), PropertyYuh->GetFullName()).c_str());
+										}
+										else if (ActorProp->GetFullName().starts_with("IntProperty "))
+										{
+											auto PropertyYuh = *(uint8*)(__int64(Actor) + ActorProp->Offset);
+											ImGui::Text(format("IntProperty: {}: {}", ActorProp->GetName(), PropertyYuh).c_str());
+										}
+										else if (ActorProp->GetFullName().starts_with("BoolProperty "))
+										{
+											auto PropertyYuh = *(bool*)(__int64(Actor) + ActorProp->Offset);
+											ImGui::Text(format("BoolProperty: {}: {}", ActorProp->GetName(), PropertyYuh).c_str());
+										}
+										else if (ActorProp->GetFullName().starts_with("NameProperty "))
+										{
+											auto PropertyYuh = *(FName*)(__int64(Actor) + ActorProp->Offset);
+											ImGui::Text(format("NameProperty: {}: {}", ActorProp->GetName(), PropertyYuh.ToString()).c_str());
+										}
+										else if (ActorProp->GetFullName().starts_with("FloatProperty "))
+										{
+											auto PropertyYuh = *(float*)(__int64(Actor) + ActorProp->Offset);
+											ImGui::Text(format("FloatProperty: {}: {}", ActorProp->GetName(), PropertyYuh).c_str());
+										}
+									}
+								}
+								ImGui::TreePop();
+							}
+						}
+					}
+				}
+				ImGui::EndTabItem();
+				ImGui::EndTabBar();
+			}
 			if (ImGui::BeginTabItem("Class Inspector"))
 			{
 				static bool bFailed = false;
@@ -265,7 +361,7 @@ namespace Overlay
 
 				ImGui::EndTabItem();
 			}
-			if (ImGui::BeginTabItem("Memory Search"))
+			if (ImGui::BeginTabItem("Memory Search (WIP)"))
 			{
 				ImGui::Text("Use this if you know what you're doing. (THIS IS VERY WIP)");
 				ImGui::Separator();
